@@ -13,12 +13,10 @@ export default async function WorkPage() {
         eyebrow="Home"
         title={
           <>
-            Selected works,
-            <br />
-            2019 — 2026
+            Caprichos Bogotanos
           </>
         }
-        lead="Fotografía editorial, retrato y arquitectura. Trabajo por encargo con revistas y estudios de diseño, y mantengo un archivo propio que crece viaje a viaje."
+        lead="Experimentaciones del curso teoría IV. Imagina algún Capricho Bogotano, -de seguro- ya habita en tu mente."
       />
 
       <FilterBar collections={collections} count={photos.length} />
