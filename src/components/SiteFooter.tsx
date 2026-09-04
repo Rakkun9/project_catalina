@@ -11,7 +11,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-hairline py-9">
       <Container className="flex flex-wrap items-baseline justify-between gap-x-9 gap-y-5">
-        <span className="ui-label text-muted">Estudio Catalina</span>
+        <span className="ui-label text-muted">Teoría IV</span>
 
         <div className="flex flex-wrap gap-x-9 gap-y-3">
           {LINKS.map((link) => (

@@ -25,7 +25,7 @@ export function SiteHeader() {
       <Container className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-5 pt-8 pb-7">
         <Link href="/" className="flex items-baseline gap-2.5">
           <span className="text-[0.9375rem] font-medium tracking-[0.02em] text-ink">
-            Estudio Catalina
+            Teoría IV
           </span>
           <span
             aria-hidden

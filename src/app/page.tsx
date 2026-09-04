@@ -16,7 +16,7 @@ export default async function WorkPage() {
             Caprichos Bogotanos
           </>
         }
-        lead="Experimentaciones del curso teoría IV. Imagina algún Capricho Bogotano, -de seguro- ya habita en tu mente."
+        lead="Experimentaciones del curso Teoría IV. Imagina algún Capricho Bogotano, -de seguro- ya habita en tu mente."
       />
 
       <FilterBar collections={collections} count={photos.length} />
