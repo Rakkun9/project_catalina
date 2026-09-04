@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Inter } from "next/font/google";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,21 +19,18 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Teoría IV — Fotografía",
-    template: "%s — Teoría IV",
+    default: "Estudio Catalina — Fotografía",
+    template: "%s — Estudio Catalina",
   },
   description:
     "Portfolio de fotografía editorial, retrato, arquitectura y still life.",
 };
 
+/** Sólo el documento y las fuentes. El chrome lo pone cada grupo de rutas. */
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${inter.variable} ${plexMono.variable} h-full`}>
-      <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <main className="flex-1">{children}</main>
-        <SiteFooter />
-      </body>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

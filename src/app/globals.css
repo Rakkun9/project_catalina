@@ -18,11 +18,6 @@
 
 :root {
   color-scheme: light;
-
-  /* Masonry por columnas — se ajusta por breakpoint más abajo */
-  --works-cols: 1;
-  --works-col-gap: 1.25rem;
-  --works-row-gap: 2.5rem;
 }
 
 html {
@@ -82,8 +77,23 @@ body {
    Grilla asimétrica — masonry por columnas.
    Las tarjetas fijan su propio aspect-ratio, así que las columnas
    quedan de distinto alto y el navegador las equilibra solo.
+
+   Los breakpoints son CONTAINER queries, no media queries: la grilla
+   responde al ancho de `.works-scope`, no al del viewport. En el sitio
+   público ese contenedor ocupa todo el ancho y el resultado es idéntico
+   a antes; en la vista previa del panel se le fija un ancho y la grilla
+   reflowa de verdad, en vez de mostrar siempre 5 columnas.
    ------------------------------------------------------------------ */
+.works-scope {
+  container-type: inline-size;
+  container-name: works;
+}
+
 .works-grid {
+  --works-cols: 1;
+  --works-col-gap: 1.25rem;
+  --works-row-gap: 2.5rem;
+
   column-count: var(--works-cols);
   column-gap: var(--works-col-gap);
 }
@@ -93,17 +103,22 @@ body {
   margin-bottom: var(--works-row-gap);
 }
 
-@media (min-width: 640px) {
-  :root { --works-cols: 2; --works-row-gap: 2rem; }
+/* Los valores son el ancho de CONTENIDO, es decir el breakpoint de viewport
+   menos el padding lateral del Container (24px por lado hasta 768px, 40px
+   desde ahí). Así el sitio público conserva exactamente las mismas columnas
+   en los mismos anchos de pantalla que antes del cambio:
+     592 = 640 − 48 · 944 = 1024 − 80 · 1200 = 1280 − 80 · 1340 ≈ 1440 − 80 */
+@container works (min-width: 592px) {
+  .works-grid { --works-cols: 2; --works-row-gap: 2rem; }
 }
-@media (min-width: 1024px) {
-  :root { --works-cols: 3; --works-row-gap: 1.25rem; }
+@container works (min-width: 944px) {
+  .works-grid { --works-cols: 3; --works-row-gap: 1.25rem; }
 }
-@media (min-width: 1280px) {
-  :root { --works-cols: 4; }
+@container works (min-width: 1200px) {
+  .works-grid { --works-cols: 4; }
 }
-@media (min-width: 1536px) {
-  :root { --works-cols: 5; }
+@container works (min-width: 1340px) {
+  .works-grid { --works-cols: 5; }
 }
 
 /* ------------------------------------------------------------------

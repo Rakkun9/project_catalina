@@ -24,10 +24,10 @@ export function SiteFooter() {
             </a>
           ))}
           <Link
-            href="/upload"
+            href="/admin"
             className="ui-label text-muted transition-colors duration-300 hover:text-ink"
           >
-            Upload
+            Admin
           </Link>
         </div>
 

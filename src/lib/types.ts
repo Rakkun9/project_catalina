@@ -23,3 +23,16 @@ export type Photo = {
   ratio: string;
   position: number;
 };
+
+/**
+ * Lo que ve el panel: la foto más lo que el sitio público no necesita.
+ * `storagePath` hace falta para borrar el objeto del bucket junto con la fila.
+ */
+export type AdminPhoto = Photo & {
+  collectionId: string | null;
+  published: boolean;
+  storagePath: string | null;
+  /** Dimensiones reales del original, en píxeles. */
+  width: number | null;
+  height: number | null;
+};

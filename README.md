@@ -31,7 +31,13 @@ contenido real reemplaza a los placeholders automáticamente
 | `/studio`             | Sobre el estudio + ficha de datos                         |
 | `/journal`            | Listado de notas con hairlines                            |
 | `/contact`            | Canales de contacto                                       |
-| `/upload`             | Subida de fotos (no indexada, protegida por código)       |
+| `/login`              | Entrada al panel                                          |
+| `/admin/photos`       | Panel: lista, orden y vista previa                        |
+| `/admin/photos/upload`| Subida múltiple con procesado en el navegador             |
+
+Las páginas públicas viven en `src/app/(site)/` y el panel en `src/app/(admin)/`,
+para que cada grupo tenga su propio chrome. Todo `/admin/*` está protegido por
+[`src/middleware.ts`](src/middleware.ts).
 
 ---
 
@@ -99,28 +105,50 @@ para que subir fotos no rompa el ritmo visual.
 cp .env.example .env.local
 ```
 
-| Variable                        | Dónde se usa                            |
-| ------------------------------- | --------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | lectura pública + `next/image`          |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | lectura pública                         |
-| `SUPABASE_SERVICE_ROLE_KEY`     | **sólo servidor** — subida en `/upload` |
-| `STUDIO_ACCESS_CODE`            | clave que protege `/upload`             |
+| Variable                        | Dónde se usa                   |
+| ------------------------------- | ------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | lectura pública + `next/image` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | lectura pública y sesión       |
+
+Son las dos únicas claves. **La service-role key ya no se usa**: el panel escribe
+con la sesión del usuario y RLS valida cada operación en la base.
 
 ### 2. Esquema
 
-Pegar [`supabase/schema.sql`](supabase/schema.sql) en el SQL Editor de Supabase y
-ejecutarlo. Crea las tablas `collections` y `photos`, el bucket público `photos`,
-las políticas de RLS de lectura y las cuatro categorías iniciales.
+Pegar [`supabase/schema.sql`](supabase/schema.sql) en el SQL Editor y ejecutarlo.
+Es idempotente, así que se puede volver a correr sobre una base existente. Crea las
+tablas, el bucket público, las políticas de RLS, el trigger de `updated_at`, la
+función `reorder_photos` y las cuatro categorías iniciales.
 
-### 3. Subir fotos
+### 3. Crear el usuario administrador
 
-`/upload` → elegir imagen, label, dato corto, categoría, proporción y el código de
-acceso. La imagen va al bucket, la ficha a `photos`, y se revalida todo el sitio.
+> ⚠️ **Paso obligatorio, y en este orden.** Las políticas de escritura habilitan a
+> cualquier usuario **autenticado**. Con el registro público abierto, eso significa
+> que cualquiera puede crearse una cuenta y escribir en tus tablas.
 
-> **Antes de producción:** el gate de `/upload` es un único código en variable de
-> entorno, suficiente para un portfolio personal pero no es autenticación.
-> Para varios usuarios, reemplazarlo por Supabase Auth y cambiar las políticas de
-> RLS de escritura a `auth.uid()`, en lugar de usar la service role key.
+1. **Authentication → Sign In / Providers → desactivar "Allow new users to sign up".**
+2. **Authentication → Users → Add user**, con "Auto Confirm User" tildado (el
+   proyecto pide confirmación por mail, y así te la salteás).
+
+Si preferís no depender de ese interruptor, el final de `schema.sql` trae un bloque
+comentado que mueve la validación a la base con una tabla `admins`. Con eso puesto,
+da igual quién se pueda registrar.
+
+### 4. Usar el panel
+
+`/admin/photos` tiene tres modos sobre el mismo estado:
+
+- **Lista** — edición inline de label, dato corto, alt, proporción y categoría.
+  Publicar/despublicar guarda al instante; el resto, con "Guardar" por fila.
+  Borrar pide confirmación y limpia también el archivo del bucket.
+- **Orden** — arrastrar para reordenar, con botones ↑ ↓ para teclado y touch.
+  "Guardar orden" escribe todas las posiciones en una sola sentencia (`reorder_photos`).
+- **Vista previa** — la grilla real a 375 / 768 / 1280 / 1440 px, reflejando el orden
+  actual aunque no lo hayas guardado.
+
+En `/admin/photos/upload` cada archivo se reescala a 2400px y se convierte a WebP
+**en tu navegador** antes de subirse, y la proporción de la tarjeta se deduce de las
+dimensiones reales del original.
 
 ---
 
@@ -128,30 +156,37 @@ acceso. La imagen va al bucket, la ficha a `photos`, y se revalida todo el sitio
 
 ```
 src/
+├── middleware.ts               refresca la sesión y bloquea /admin/*
 ├── app/
-│   ├── layout.tsx              Inter + IBM Plex Mono, header, footer
-│   ├── page.tsx                Work
+│   ├── layout.tsx              <html>, fuentes, globals.css
 │   ├── globals.css             tokens + grilla + utilidades
-│   ├── collections/[slug]/     vista filtrada
-│   ├── studio/ · journal/ · contact/
-│   └── upload/                 page · UploadForm · actions · formats
-├── components/
-│   ├── SiteHeader.tsx          wordmark + punto de acento + nav
-│   ├── SiteFooter.tsx
-│   ├── Container.tsx           1440px + padding lateral
-│   ├── PageIntro.tsx           eyebrow + display + lead (7fr / 4fr)
-│   ├── FilterBar.tsx           categorías + contador
-│   ├── PhotoGrid.tsx           .works-grid
-│   ├── PhotoTile.tsx           marco + pie con hairline
-│   └── LoadMore.tsx
+│   ├── (site)/                 sitio público
+│   │   ├── layout.tsx          SiteHeader + SiteFooter
+│   │   └── page.tsx · collections/[slug]/ · studio/ · journal/ · contact/
+│   └── (admin)/                panel
+│       ├── login/              page · LoginForm
+│       └── admin/
+│           ├── layout.tsx      chrome del panel + salir
+│           ├── actions.ts      update · delete · reorder · signOut
+│           └── photos/
+│               ├── PhotoManager.tsx   estado compartido + 3 modos
+│               ├── PhotoRow.tsx       fila editable
+│               ├── ReorderGrid.tsx    arrastre nativo + ↑ ↓
+│               ├── PreviewPane.tsx    PhotoGrid real a distintos anchos
+│               └── upload/            page · UploadClient
+├── components/                 SiteHeader · SiteFooter · Container · PageIntro
+│                               FilterBar · PhotoGrid · PhotoTile · LoadMore
 └── lib/
-    ├── types.ts
+    ├── types.ts                Photo y AdminPhoto
+    ├── ratios.ts               presets + closestRatio()
+    ├── image.ts                resize + WebP en canvas
     ├── placeholder-data.ts     18 proyectos, 4 categorías
-    ├── queries.ts              Supabase con fallback a placeholder
-    └── supabase/               config · server (lectura) · admin (escritura)
+    ├── queries.ts              públicas (con fallback) + del panel (sin fallback)
+    └── supabase/               config · server (anon) · session (cookies) · browser
 ```
 
 ## Próximo paso
 
-Reemplazar el contenido de `src/lib/placeholder-data.ts` con las fotos reales, o
-cargarlas desde `/upload` una vez conectada la base.
+Con el panel andando, los candidatos más útiles para la próxima etapa son el blur
+placeholder para `next/image`, las acciones masivas y el ABM de categorías —
+detallados al final del plan en `.claude/plans/`.
