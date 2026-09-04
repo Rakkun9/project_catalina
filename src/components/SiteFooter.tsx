@@ -4,7 +4,7 @@ import { Container } from "./Container";
 const LINKS = [
   { href: "https://instagram.com", label: "Instagram" },
   { href: "https://behance.net", label: "Behance" },
-  { href: "mailto:hola@catalina.photo", label: "Mail" },
+  { href: "mailto:hola@prueba.photo", label: "Mail" },
 ];
 
 export function SiteFooter() {

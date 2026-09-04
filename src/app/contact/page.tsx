@@ -4,8 +4,8 @@ import { PageIntro } from "@/components/PageIntro";
 export const metadata = { title: "Contact" };
 
 const CHANNELS = [
-  { label: "Email", value: "hola@catalina.photo", href: "mailto:hola@catalina.photo" },
-  { label: "Instagram", value: "@estudio.catalina", href: "https://instagram.com" },
+  { label: "Email", value: "hola@prueba.photo", href: "mailto:Prueba" },
+  { label: "Instagram", value: "@estudio.prueba", href: "https://instagram.com" },
   { label: "Teléfono", value: "+54 11 0000 0000", href: "tel:+541100000000" },
 ];
 
