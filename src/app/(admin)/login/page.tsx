@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <div className="mx-auto flex w-full max-w-[1440px] items-baseline justify-between px-6 pt-8 pb-7 md:px-10">
           <Link href="/" className="flex items-baseline gap-2.5">
             <span className="text-[0.9375rem] font-medium tracking-[0.02em] text-ink">
-              Estudio Catalina
+              Teoria IV
             </span>
             <span aria-hidden className="size-1 -translate-y-[3px] rounded-full bg-accent" />
           </Link>

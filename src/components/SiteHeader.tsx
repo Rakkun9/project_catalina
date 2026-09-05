@@ -6,9 +6,6 @@ import { Container } from "./Container";
 
 const NAV = [
   { href: "/", label: "Work" },
-  { href: "/studio", label: "Studio" },
-  { href: "/journal", label: "Journal" },
-  { href: "/contact", label: "Contact" },
 ];
 
 export function SiteHeader() {

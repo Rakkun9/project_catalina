@@ -20,7 +20,7 @@ export default async function AdminShell({ children }: { children: ReactNode }) 
           <div className="flex flex-wrap items-baseline gap-x-9 gap-y-3">
             <Link href="/admin/photos" className="flex items-baseline gap-2.5">
               <span className="text-[0.9375rem] font-medium tracking-[0.02em] text-ink">
-                Estudio Catalina
+                Teoría IV
               </span>
               <span aria-hidden className="size-1 -translate-y-[3px] rounded-full bg-accent" />
             </Link>

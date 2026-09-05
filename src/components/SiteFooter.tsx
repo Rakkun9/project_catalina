@@ -2,8 +2,7 @@ import Link from "next/link";
 import { Container } from "./Container";
 
 const LINKS = [
-  { href: "https://instagram.com", label: "Instagram" },
-  { href: "https://behance.net", label: "Behance" },
+  { href: "https://www.instagram.com/caprichosbogotanos?igsi=MnQ0ZzZ2am52ZzE3&utm_source=qr", label: "Instagram" },
   { href: "mailto:hola@prueba.photo", label: "Mail" },
 ];
 
