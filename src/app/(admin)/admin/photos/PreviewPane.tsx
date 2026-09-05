@@ -63,12 +63,15 @@ export function PreviewPane({ photos }: { photos: AdminPhoto[] }) {
         </label>
       </div>
 
-      <div className="mt-10 overflow-x-auto pb-6">
-        <div
-          style={{ width: contentWidth }}
-          className="mx-auto border border-hairline bg-paper p-6"
-        >
-          <PhotoGrid photos={visible} bare />
+      {/* El padding va en la caja de afuera y el ancho exacto en la de adentro.
+          Si el p-6 envolviera a la grilla, el contenedor de las container
+          queries mediría 48px menos que en el sitio real y la vista previa
+          mentiría justo en los bordes de cada breakpoint. */}
+      <div className="mt-10 flex justify-center overflow-x-auto pb-6">
+        <div className="shrink-0 border border-hairline bg-paper p-6">
+          <div style={{ width: contentWidth }}>
+            <PhotoGrid photos={visible} bare />
+          </div>
         </div>
       </div>
 

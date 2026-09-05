@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useTransition } from "react";
-import { RATIOS } from "@/lib/ratios";
+import { RatioSelect, cropAmount } from "@/components/RatioSelect";
 import type { AdminPhoto, Collection } from "@/lib/types";
 import { deletePhoto, updatePhoto, type PhotoPatch } from "../actions";
 
@@ -40,6 +40,8 @@ export function PhotoRow({
 
   const original = draftOf(photo);
   const dirty = (Object.keys(draft) as (keyof Draft)[]).some((k) => draft[k] !== original[k]);
+
+  const crop = cropAmount(draft.ratio, photo.width, photo.height);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -95,7 +97,7 @@ export function PhotoRow({
       <div className="flex flex-col gap-5 md:flex-row md:gap-7">
         <div
           style={{ aspectRatio: photo.ratio }}
-          className="relative w-24 shrink-0 overflow-hidden bg-tile md:w-28"
+          className="relative w-24 shrink-0 overflow-hidden rounded-tile bg-tile md:w-28"
         >
           {photo.src ? (
             <Image src={photo.src} alt="" fill sizes="112px" className="object-cover" />
@@ -137,17 +139,18 @@ export function PhotoRow({
 
             <label className="block">
               <span className="ui-tile-label text-muted">Proporción</span>
-              <select
+              <RatioSelect
                 value={draft.ratio}
-                onChange={(e) => set("ratio", e.target.value)}
-                className={`${field} cursor-pointer`}
-              >
-                {RATIOS.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.name} — {r.value}
-                  </option>
-                ))}
-              </select>
+                width={photo.width}
+                height={photo.height}
+                onChange={(ratio) => set("ratio", ratio)}
+                className={field}
+              />
+              {crop > 0.01 ? (
+                <span className="ui-tile-label mt-1.5 block text-accent">
+                  Recorta {Math.round(crop * 100)}% de la foto
+                </span>
+              ) : null}
             </label>
 
             <label className="block">

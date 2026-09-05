@@ -183,6 +183,18 @@ as $$
    where p.id = idx.id;
 $$;
 
+-- Mismo criterio para las categorías.
+create or replace function public.reorder_collections(ids uuid[])
+returns void
+language sql
+security invoker
+as $$
+  update public.collections c
+     set position = idx.ord
+    from unnest(ids) with ordinality as idx(id, ord)
+   where c.id = idx.id;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- Storage
 -- ---------------------------------------------------------------------------

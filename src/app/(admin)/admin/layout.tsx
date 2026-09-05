@@ -6,6 +6,7 @@ import { signOut } from "./actions";
 const NAV = [
   { href: "/admin/photos", label: "Fotos" },
   { href: "/admin/photos/upload", label: "Subir" },
+  { href: "/admin/categories", label: "Categorías" },
 ];
 
 export default async function AdminShell({ children }: { children: ReactNode }) {

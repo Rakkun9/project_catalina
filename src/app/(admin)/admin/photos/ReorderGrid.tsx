@@ -50,7 +50,7 @@ export function ReorderGrid({
           >
             <div
               style={{ aspectRatio: photo.ratio }}
-              className={`relative overflow-hidden bg-tile ${
+              className={`relative overflow-hidden rounded-tile bg-tile ${
                 isOver ? "outline-2 outline-offset-2 outline-ink" : ""
               } ${disabled ? "" : "cursor-grab active:cursor-grabbing"}`}
             >

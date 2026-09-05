@@ -33,6 +33,7 @@ contenido real reemplaza a los placeholders automáticamente
 | `/contact`            | Canales de contacto                                       |
 | `/login`              | Entrada al panel                                          |
 | `/admin/photos`       | Panel: lista, orden y vista previa                        |
+| `/admin/categories`   | Crear, editar, ordenar y borrar categorías                |
 | `/admin/photos/upload`| Subida múltiple con procesado en el navegador             |
 
 Las páginas públicas viven en `src/app/(site)/` y el panel en `src/app/(admin)/`,
@@ -83,17 +84,22 @@ El canvas resolvía este reparto con un algoritmo en JS sobre 5 columnas fijas.
 Acá lo hace el navegador: mismo resultado visual, sin JS y reflowando solo en
 cada breakpoint.
 
-| Ancho     | Columnas | Gap vertical |
-| --------- | -------- | ------------ |
-| `< 640px` | 1        | 40px         |
-| `≥ 640px` | 2        | 32px         |
-| `≥ 1024px`| 3        | 20px         |
-| `≥ 1280px`| 4        | 20px         |
-| `≥ 1536px`| 5        | 20px         |
+| Ancho     | Columnas | Gap columna | Gap fila |
+| --------- | -------- | ----------- | -------- |
+| `< 640px` | 2        | 12px        | 20px     |
+| `≥ 640px` | 2        | 20px        | 32px     |
+| `≥ 1024px`| 3        | 20px        | 20px     |
+| `≥ 1280px`| 4        | 20px        | 20px     |
+| `≥ 1536px`| 5        | 20px        | 20px     |
 
-Las proporciones disponibles están preseteadas en
-[`src/app/upload/formats.ts`](src/app/upload/formats.ts) — de `16/10` a `5/7` —
-para que subir fotos no rompa el ritmo visual.
+En celular son **dos columnas** desde el arranque, tipo Pinterest, con gaps más
+chicos para que las fotos ganen ancho. El pie de cada tarjeta usa `flex-wrap` con
+`basis-20` en el label: cuando la tarjeta es angosta, el dato corto baja de línea
+en lugar de aplastar el nombre.
+
+Cada tarjeta declara su `aspect-ratio` real, no uno de una lista cerrada — ver
+"Proporciones" más abajo. Las esquinas usan `--radius-tile` (4px), definido una
+sola vez en `@theme`.
 
 ---
 
@@ -147,8 +153,27 @@ da igual quién se pueda registrar.
   actual aunque no lo hayas guardado.
 
 En `/admin/photos/upload` cada archivo se reescala a 2400px y se convierte a WebP
-**en tu navegador** antes de subirse, y la proporción de la tarjeta se deduce de las
-dimensiones reales del original.
+**en tu navegador** antes de subirse.
+
+### 5. Proporciones: por qué no hay que elegirlas
+
+Cada foto usa **su proporción exacta** por defecto, calculada de las dimensiones
+reales del archivo. Como el marco tiene la misma forma que la imagen, `object-cover`
+no recorta nada.
+
+Los presets (`4 / 3`, `1 / 1`, `2 / 3`…) siguen disponibles como **recorte
+deliberado**, y el panel avisa cuánto se pierde: forzar una foto 3:2 a `4 / 5`
+descarta el 47% de la imagen.
+
+El botón **"Quitar recortes"** en `/admin/photos` devuelve todas las fotos a su
+proporción original de una vez — útil para las cargadas antes de este cambio.
+
+### 6. Categorías
+
+`/admin/categories` permite crearlas, renombrarlas, cambiarles la URL y la
+descripción, y reordenarlas (el orden es el de la barra de filtros del sitio).
+Borrar una categoría **no borra sus fotos**: la clave foránea es
+`on delete set null`, así que quedan sin categoría y se reasignan desde la lista.
 
 ---
 
@@ -167,19 +192,22 @@ src/
 │       ├── login/              page · LoginForm
 │       └── admin/
 │           ├── layout.tsx      chrome del panel + salir
-│           ├── actions.ts      update · delete · reorder · signOut
-│           └── photos/
+│           ├── actions.ts      fotos + categorías + quitar recortes
+│           ├── photos/
 │               ├── PhotoManager.tsx   estado compartido + 3 modos
 │               ├── PhotoRow.tsx       fila editable
 │               ├── ReorderGrid.tsx    arrastre nativo + ↑ ↓
 │               ├── PreviewPane.tsx    PhotoGrid real a distintos anchos
 │               └── upload/            page · UploadClient
+│           └── categories/            page · CategoryManager · CategoryRow
 ├── components/                 SiteHeader · SiteFooter · Container · PageIntro
 │                               FilterBar · PhotoGrid · PhotoTile · LoadMore
+│                               RatioSelect (proporción + aviso de recorte)
 └── lib/
     ├── types.ts                Photo y AdminPhoto
-    ├── ratios.ts               presets + closestRatio()
-    ├── image.ts                resize + WebP en canvas
+    ├── ratios.ts               exactRatio() + presets de recorte
+    ├── slug.ts                 slugify() para las categorías
+    ├── image.ts                resize + WebP + readDimensions()
     ├── placeholder-data.ts     18 proyectos, 4 categorías
     ├── queries.ts              públicas (con fallback) + del panel (sin fallback)
     └── supabase/               config · server (anon) · session (cookies) · browser

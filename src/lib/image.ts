@@ -1,4 +1,4 @@
-import { closestRatio } from "./ratios";
+import { exactRatio } from "./ratios";
 
 export type ProcessedImage = {
   /** Archivo listo para subir: reescalado y recomprimido. */
@@ -8,7 +8,7 @@ export type ProcessedImage = {
   /** Dimensiones del ORIGINAL, que son las que se guardan en la base. */
   width: number;
   height: number;
-  /** Preset de proporción más cercano al original. */
+  /** Proporción EXACTA del original, reducida. Sin recorte. */
   ratio: string;
   /** Dimensiones del archivo generado. */
   outputWidth: number;
@@ -50,7 +50,7 @@ export async function processImage(file: File): Promise<ProcessedImage> {
       extension: blob.type === "image/webp" ? "webp" : "jpg",
       width,
       height,
-      ratio: closestRatio(width, height),
+      ratio: exactRatio(width, height),
       outputWidth,
       outputHeight,
     };
@@ -92,4 +92,19 @@ export function labelFromFilename(filename: string): string {
     .replace(/[-_]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * Lee sólo las dimensiones, sin procesar la imagen. Es barato y permite mostrar
+ * la proporción real apenas se eligen los archivos, en vez de esperar a la subida.
+ */
+export async function readDimensions(
+  file: File,
+): Promise<{ width: number; height: number }> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    return { width: bitmap.width, height: bitmap.height };
+  } finally {
+    bitmap.close();
+  }
 }

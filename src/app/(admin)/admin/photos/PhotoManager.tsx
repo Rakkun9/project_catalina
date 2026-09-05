@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { AdminPhoto, Collection } from "@/lib/types";
-import { reorderPhotos } from "../actions";
+import { reorderPhotos, resetRatiosToOriginal } from "../actions";
 import { PhotoRow } from "./PhotoRow";
 import { PreviewPane } from "./PreviewPane";
 import { ReorderGrid } from "./ReorderGrid";
@@ -25,6 +26,7 @@ export function PhotoManager({
 }) {
   // Una sola fuente de verdad para los tres modos: reordenar en "Orden" se ve
   // inmediatamente en "Vista previa", sin necesidad de guardar antes.
+  const router = useRouter();
   const [photos, setPhotos] = useState(initialPhotos);
   const [savedOrder, setSavedOrder] = useState(() => initialPhotos.map((p) => p.id).join());
   const [mode, setMode] = useState<Mode>("list");
@@ -48,6 +50,14 @@ export function PhotoManager({
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
       return next;
+    });
+  }
+
+  function resetRatios() {
+    startTransition(async () => {
+      const result = await resetRatiosToOriginal();
+      onStatus(result.ok, result.message);
+      if (result.ok) router.refresh();
     });
   }
 
@@ -75,12 +85,26 @@ export function PhotoManager({
           </p>
         </div>
 
-        <Link
-          href="/admin/photos/upload"
-          className="ui-label border border-ink px-7 py-3.5 text-ink transition-colors duration-300 hover:bg-ink hover:text-paper"
-        >
-          Subir fotos
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          {photos.length > 0 ? (
+            <button
+              type="button"
+              onClick={resetRatios}
+              disabled={pending}
+              title="Quita el recorte de todas las fotos y usa su proporción real"
+              className="ui-label cursor-pointer border border-hairline px-6 py-3.5 text-muted transition-colors duration-300 hover:border-ink hover:text-ink disabled:cursor-not-allowed"
+            >
+              Quitar recortes
+            </button>
+          ) : null}
+
+          <Link
+            href="/admin/photos/upload"
+            className="ui-label border border-ink px-7 py-3.5 text-ink transition-colors duration-300 hover:bg-ink hover:text-paper"
+          >
+            Subir fotos
+          </Link>
+        </div>
       </div>
 
       <div className="mt-12 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-hairline pb-5">

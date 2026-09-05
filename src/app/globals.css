@@ -12,6 +12,9 @@
   --color-tile-label: #a8a5a0;
   --color-accent: oklch(0.62 0.06 40);
 
+  /* Radio de las tarjetas. Un solo lugar para ajustarlo en todo el sitio. */
+  --radius-tile: 4px;
+
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
 }
@@ -90,9 +93,12 @@ body {
 }
 
 .works-grid {
-  --works-cols: 1;
-  --works-col-gap: 1.25rem;
-  --works-row-gap: 2.5rem;
+  /* En celular arranca en DOS columnas, como una grilla tipo Pinterest: con
+     una sola, cada foto ocupa la pantalla entera y hay que scrollear mucho
+     para ver poco. Los gaps son más chicos acá para que las fotos ganen ancho. */
+  --works-cols: 2;
+  --works-col-gap: 0.75rem;
+  --works-row-gap: 1.25rem;
 
   column-count: var(--works-cols);
   column-gap: var(--works-col-gap);
@@ -105,11 +111,14 @@ body {
 
 /* Los valores son el ancho de CONTENIDO, es decir el breakpoint de viewport
    menos el padding lateral del Container (24px por lado hasta 768px, 40px
-   desde ahí). Así el sitio público conserva exactamente las mismas columnas
-   en los mismos anchos de pantalla que antes del cambio:
+   desde ahí). Así las columnas cambian en los mismos anchos de pantalla:
      592 = 640 − 48 · 944 = 1024 − 80 · 1200 = 1280 − 80 · 1340 ≈ 1440 − 80 */
 @container works (min-width: 592px) {
-  .works-grid { --works-cols: 2; --works-row-gap: 2rem; }
+  .works-grid {
+    --works-cols: 2;
+    --works-col-gap: 1.25rem;
+    --works-row-gap: 2rem;
+  }
 }
 @container works (min-width: 944px) {
   .works-grid { --works-cols: 3; --works-row-gap: 1.25rem; }

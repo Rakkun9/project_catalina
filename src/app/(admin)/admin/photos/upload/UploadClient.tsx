@@ -2,8 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
-import { labelFromFilename, processImage } from "@/lib/image";
-import { RATIOS } from "@/lib/ratios";
+import { exactRatio } from "@/lib/ratios";
+import { labelFromFilename, processImage, readDimensions } from "@/lib/image";
+import { RatioSelect, cropAmount } from "@/components/RatioSelect";
+import { DEFAULT_RATIO } from "@/lib/ratios";
 import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { Collection } from "@/lib/types";
@@ -21,6 +23,9 @@ type Item = {
   stage: Stage;
   message?: string;
   previewUrl: string;
+  /** Dimensiones reales del original; se leen antes de subir. */
+  width: number | null;
+  height: number | null;
   /** Tamaño del archivo generado, para mostrar cuánto se ahorró. */
   outputBytes?: number;
 };
@@ -50,6 +55,31 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
     setItems((list) => list.map((i) => (i.key === key ? { ...i, ...next } : i)));
   }, []);
 
+  /**
+   * Lee las dimensiones de cada archivo y fija su proporción exacta. Corre
+   * después de pintar la lista, así los archivos aparecen al instante y la
+   * proporción se completa sola un momento más tarde.
+   */
+  const measure = useCallback(
+    async (files: File[]) => {
+      for (const file of files) {
+        try {
+          const { width, height } = await readDimensions(file);
+          setItems((list) =>
+            list.map((i) =>
+              i.file === file && i.stage === "ready"
+                ? { ...i, width, height, ratio: exactRatio(width, height) }
+                : i,
+            ),
+          );
+        } catch {
+          // Un archivo ilegible se marca al intentar subirlo, no acá.
+        }
+      }
+    },
+    [],
+  );
+
   const addFiles = useCallback((files: FileList | File[]) => {
     setError(null);
     const rejected: string[] = [];
@@ -68,19 +98,24 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
 
     if (rejected.length) setError(`Se ignoraron: ${rejected.join(", ")}`);
 
+    void measure(accepted);
+
     setItems((list) => [
       ...list,
       ...accepted.map((file, i) => ({
         key: `${Date.now()}-${i}-${file.name}`,
         file,
         label: labelFromFilename(file.name),
-        // Se corrige apenas se lee el archivo, en el paso de procesado.
-        ratio: "4 / 5",
+        // Provisorio: measure() lo reemplaza por la proporción exacta
+        // apenas termina de leer las dimensiones, unos milisegundos después.
+        ratio: DEFAULT_RATIO,
+        width: null,
+        height: null,
         stage: "ready" as Stage,
         previewUrl: URL.createObjectURL(file),
       })),
     ]);
-  }, []);
+  }, [measure]);
 
   function removeItem(key: string) {
     setItems((list) => {
@@ -121,11 +156,9 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
       try {
         patch(item.key, { stage: "processing", message: undefined });
         const processed = await processImage(item.file);
-        patch(item.key, {
-          stage: "uploading",
-          ratio: processed.ratio,
-          outputBytes: processed.blob.size,
-        });
+        // La proporción NO se pisa: measure() ya puso la exacta y quizá
+        // la persona la cambió a propósito desde el select.
+        patch(item.key, { stage: "uploading", outputBytes: processed.blob.size });
 
         const path = `${crypto.randomUUID()}.${processed.extension}`;
         const { error: storageError } = await supabase.storage
@@ -148,7 +181,7 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
           alt: label,
           storage_path: path,
           collection_id: collectionId || null,
-          ratio: processed.ratio,
+          ratio: item.ratio,
           width: processed.width,
           height: processed.height,
           published: publish,
@@ -274,7 +307,7 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
                 key={item.key}
                 className="flex flex-col gap-5 border-b border-hairline py-6 md:flex-row md:items-start md:gap-7"
               >
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden bg-tile">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-tile bg-tile">
                   {/* Blob local: next/image no aporta nada y no puede optimizarlo. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -297,20 +330,31 @@ export function UploadClient({ collections }: { collections: Collection[] }) {
 
                   <label className="block">
                     <span className="ui-tile-label text-muted">
-                      Proporción {item.stage === "ready" ? "(se detecta al subir)" : ""}
+                      Proporción{" "}
+                      {item.width ? (
+                        <span className="font-mono text-tile-label">
+                          {item.width}×{item.height}
+                        </span>
+                      ) : (
+                        "· midiendo…"
+                      )}
                     </span>
-                    <select
+                    <RatioSelect
                       value={item.ratio}
-                      onChange={(e) => patch(item.key, { ratio: e.target.value })}
-                      disabled={running || item.stage === "done"}
-                      className={`${field} cursor-pointer`}
-                    >
-                      {RATIOS.map((r) => (
-                        <option key={r.value} value={r.value}>
-                          {r.name} — {r.value}
-                        </option>
-                      ))}
-                    </select>
+                      width={item.width}
+                      height={item.height}
+                      onChange={(ratio) => patch(item.key, { ratio })}
+                      disabled={running || item.stage === "done" || !item.width}
+                      className={field}
+                    />
+                    {(() => {
+                      const crop = cropAmount(item.ratio, item.width, item.height);
+                      return crop > 0.01 ? (
+                        <span className="ui-tile-label mt-1.5 block text-accent">
+                          Recorta {Math.round(crop * 100)}%
+                        </span>
+                      ) : null;
+                    })()}
                   </label>
                 </div>
 

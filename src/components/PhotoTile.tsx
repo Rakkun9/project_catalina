@@ -10,7 +10,7 @@ export function PhotoTile({ photo, priority = false }: { photo: Photo; priority?
     <>
       <div
         style={frameStyle}
-        className="relative overflow-hidden transition-opacity duration-[400ms] ease-out group-hover:opacity-[0.82]"
+        className="relative overflow-hidden rounded-tile transition-opacity duration-[400ms] ease-out group-hover:opacity-[0.82]"
       >
         {photo.src ? (
           <Image
@@ -34,8 +34,20 @@ export function PhotoTile({ photo, priority = false }: { photo: Photo; priority?
       </div>
 
       {photo.meta ? (
-        <div className="mt-3 flex justify-between gap-2.5 border-t border-hairline pt-2.5 whitespace-nowrap">
-          <span className="ui-tile-label text-ink">{photo.label}</span>
+        // El pie se adapta al ancho real de la tarjeta, que en la grilla de dos
+        // columnas del celular ronda los 150px:
+        //   · min-w-0 habilita el truncate — sin él el item flex se niega a
+        //     achicarse por debajo de su contenido y el texto se sale.
+        //   · basis-20 le da al label un ancho mínimo deseado, y eso es lo que
+        //     hace que el dato corto baje de línea en vez de aplastarlo. Con
+        //     truncate solo, el label se encogería a cero y nunca envolvería.
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-2.5 border-t border-hairline pt-2.5">
+          <span
+            className="ui-tile-label min-w-0 flex-1 basis-20 truncate text-ink"
+            title={photo.label}
+          >
+            {photo.label}
+          </span>
           <span className="ui-tile-label text-muted">{photo.meta}</span>
         </div>
       ) : null}
