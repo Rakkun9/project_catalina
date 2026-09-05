@@ -20,7 +20,7 @@ const plexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Estudio fotografía",
-    template: "%s — Estudio Catalina",
+    template: "Estudio fotografía | %s",
   },
   description:
     "Portfolio de fotografía editorial, retrato, arquitectura y still life.",
